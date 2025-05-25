@@ -1,10 +1,28 @@
+/**
+ * 中间代码表示类
+ * 用于编译器中间代码生成阶段的四元组表示
+ * @author CompilerTeam
+ */
 package Midcode;
 
 public class midCode {
-    public operation op;       //操作符
-    public String z = null;           //结果
-    public String x = null;           //左操作符
-    public String y = null;           //右操作符
+    // 四元组操作类型
+    public operation op;
+    // 目标操作数或结果存储位置
+    public String z = null;
+    // 第一个源操作数
+    public String x = null;
+    // 第二个源操作数
+    public String y = null;
+
+    /**
+     * 完整四元组构造方法
+     * 
+     * @param op 操作类型
+     * @param z  目标操作数
+     * @param x  第一源操作数
+     * @param y  第二源操作数
+     */
     public midCode(operation op, String z, String x, String y) {
         this.op = op;
         this.z = z;
@@ -12,104 +30,95 @@ public class midCode {
         this.y = y;
     }
 
+    /**
+     * 双操作数构造方法
+     * 
+     * @param op 操作类型
+     * @param z  目标操作数
+     */
     public midCode(operation op, String z) {
         this.op = op;
         this.z = z;
     }
 
+    /**
+     * 三操作数构造方法
+     * 
+     * @param op 操作类型
+     * @param z  目标操作数
+     * @param x  源操作数
+     */
     public midCode(operation op, String z, String x) {
         this.op = op;
         this.z = z;
         this.x = x;
     }
 
+    /**
+     * 将中间代码四元组转换为字符串表示
+     * 
+     * @return 格式化后的中间代码字符串
+     */
     @Override
     public String toString() {
+        // 根据操作类型生成对应的中间代码表示
         switch (op) {
             case PLUSOP:
-                return z + " = " + x + " + " + y;
+                return generateBinaryOperation("+");
             case MINUOP:
-                return z + " = " + x + " - " + y;
+                return generateBinaryOperation("-");
             case MULTOP:
-                return z + " = " + x + " * " + y;
+                return generateBinaryOperation("*");
             case DIVOP:
-                return z + " = " + x + " / " + y;
+                return generateBinaryOperation("/");
             case MODOP:
-                return z + " = " + x + " % " + y;
+                return generateBinaryOperation("%");
             case LSSOP:
-                return z + " = " + x + " < " + y;
+                return generateBinaryOperation("<");
             case LEQOP:
-                return z + " = " + x + " <= " + y;
+                return generateBinaryOperation("<=");
             case GREOP:
-                return z + " = " + x + " > " + y;
+                return generateBinaryOperation(">");
             case GEQOP:
-                return z + " = " + x + " >= " + y;
+                return generateBinaryOperation(">=");
             case EQLOP:
-                return z + " = " + x + " == " + y;
+                return generateBinaryOperation("==");
             case NEQOP:
-                return z + " = " + x + " != " + y;
+                return generateBinaryOperation("!=");
             case ASSIGNOP:
                 return z + " = " + x;
             case GOTO:
-//                if(x==null){
                 return "GOTO " + z;
-//                }else{
-//                    return "GOTO loop"+z+"---"+x;
-//                }
             case BZ:
                 return "if " + x + " == 0 then goto " + z;
             case BNZ:
-//                midCodefile << "BNZ " << mc.z << "(" << mc.x << "=1)" << "\n";
                 break;
             case Jump:
                 return "        <JUMPDST " + z + ">";
             case PUSH:
-                if (x == null)
-                    return "push " + z;
-                else
-                    return "push " + z + "[" + x + "]" + "[" + y + "]";
+                return generatePushOperation();
             case CALL:
                 return "call " + z;
             case RET:
-                if (z != null)
-                    return "RET  " + z;
-                else
-                    return "RET null";
+                return generateReturnOperation();
             case RETVALUE:
                 return "retvalue " + z;
             case SCAN:
                 return "scan " + z;
             case PRINT:
-                if (x.equals("string"))
-                    return "print \"" + z + "\"";
-                else
-                    return "print " + z;
+                return generatePrintOperation();
             case LABEL:
                 return "    <LABEL " + z + " " + x + ">";
             case CONST:
                 return "const int " + z + " = " + x;
             case ARRAY:
-                if (y == null) {
-                    return "array int " + z + "[" + x + "]";
-                } else {
-                    return "array int " + z + "[" + x + "]" + "[" + y + "]";
-                }
+                return generateArrayDeclaration();
             case VAR:
-                if (x == null) {
-                    return "var int " + z;
-                } else {
-                    return "var int " + z + " = " + x;
-                }
+                return generateVariableDeclaration();
             case FUNC:
                 return x + " " + z + "( )";
             case PARAM:
-                if (x.equals("0")) {
-                    return "para int " + z;
-                } else if (x.equals("1")) {
-                    return "para int " + z + "[]";
-                } else {
-                    return "para int " + z + "[][" + y + "]";
-                }
+                return generateParameterDeclaration();
             case MAIN:
                 return "\nMAIN\n";
             case GETARRAY:
@@ -119,50 +128,129 @@ public class midCode {
             case EXIT:
                 return "\n-----------------EXIT--------------\n";
             case SLL:
-                return z + " = " + x + " << " + y;
+                return generateBinaryOperation("<<");
             case SRA:
-                return z + " = " + x + " >> " + y;
+                return generateBinaryOperation(">>");
             default:
                 return null;
         }
         return null;
     }
 
+    /**
+     * 生成二元运算操作的字符串表示
+     */
+    private String generateBinaryOperation(String operator) {
+        return z + " = " + x + " " + operator + " " + y;
+    }
+
+    /**
+     * 生成PUSH操作的字符串表示
+     */
+    private String generatePushOperation() {
+        if (x == null) {
+            return "push " + z;
+        } else {
+            return "push " + z + "[" + x + "]" + "[" + y + "]";
+        }
+    }
+
+    /**
+     * 生成返回操作的字符串表示
+     */
+    private String generateReturnOperation() {
+        if (z != null) {
+            return "RET  " + z;
+        } else {
+            return "RET null";
+        }
+    }
+
+    /**
+     * 生成打印操作的字符串表示
+     */
+    private String generatePrintOperation() {
+        if (x.equals("string")) {
+            return "print \"" + z + "\"";
+        } else {
+            return "print " + z;
+        }
+    }
+
+    /**
+     * 生成数组声明的字符串表示
+     */
+    private String generateArrayDeclaration() {
+        if (y == null) {
+            return "array int " + z + "[" + x + "]";
+        } else {
+            return "array int " + z + "[" + x + "]" + "[" + y + "]";
+        }
+    }
+
+    /**
+     * 生成变量声明的字符串表示
+     */
+    private String generateVariableDeclaration() {
+        if (x == null) {
+            return "var int " + z;
+        } else {
+            return "var int " + z + " = " + x;
+        }
+    }
+
+    /**
+     * 生成参数声明的字符串表示
+     */
+    private String generateParameterDeclaration() {
+        if (x.equals("0")) {
+            return "para int " + z;
+        } else if (x.equals("1")) {
+            return "para int " + z + "[]";
+        } else {
+            return "para int " + z + "[][" + y + "]";
+        }
+    }
+
+    /**
+     * 中间代码操作类型枚举
+     * 定义了编译器支持的所有中间代码操作
+     */
     public enum operation {
-        MAIN,   //主函数进入入口
-        PLUSOP, //+
-        MINUOP, //-
-        MULTOP, //*
-        DIVOP,  // /
-        MODOP,  // %
-        LSSOP,  //<
-        LEQOP,  //<=
-        GREOP,  //>
-        GEQOP,  //>=
-        EQLOP,  //==
-        NEQOP,  //!=
-        ASSIGNOP,  //=
-        GOTO,  //无条件跳转
-        Jump,  //跳转标记
-        BZ,    //不满足条件跳转
-        BNZ,   //满足条件跳转
-        PUSH,  //函数调用时参数传递
-        CALL,  //函数调用
-        RET,   //函数返回语句
-        RETVALUE, //有返回值函数返回的结果
-        SCAN,  //读
-        PRINT, //写
-        LABEL, //标号,区分不同作用域和标号
-        CONST, //常量
-        ARRAY, //数组
-        VAR,   //变量
-        FUNC,  //函数定义
-        PARAM, //函数参数
-        GETARRAY,  //取数组的值  t = a[]
-        PUTARRAY,  //给数组赋值  a[] = t
-        EXIT,  //退出 main最后
-        DEBUG,
-        SLL,   //左移
-        SRA,   //右移
+        MAIN, // 程序主入口标识
+        PLUSOP, // 加法运算
+        MINUOP, // 减法运算
+        MULTOP, // 乘法运算
+        DIVOP, // 除法运算
+        MODOP, // 取模运算
+        LSSOP, // 小于比较
+        LEQOP, // 小于等于比较
+        GREOP, // 大于比较
+        GEQOP, // 大于等于比较
+        EQLOP, // 等于比较
+        NEQOP, // 不等于比较
+        ASSIGNOP, // 赋值操作
+        GOTO, // 无条件跳转指令
+        Jump, // 跳转目标标记
+        BZ, // 条件为假时跳转
+        BNZ, // 条件为真时跳转
+        PUSH, // 函数调用参数压栈
+        CALL, // 函数调用指令
+        RET, // 函数返回指令
+        RETVALUE, // 返回值处理指令
+        SCAN, // 输入操作指令
+        PRINT, // 输出操作指令
+        LABEL, // 标号定义指令
+        CONST, // 常量定义指令
+        ARRAY, // 数组定义指令
+        VAR, // 变量定义指令
+        FUNC, // 函数定义指令
+        PARAM, // 函数参数定义指令
+        GETARRAY, // 数组元素读取指令
+        PUTARRAY, // 数组元素赋值指令
+        EXIT, // 程序退出标识
+        DEBUG, // 调试信息指令
+        SLL, // 位左移运算
+        SRA, // 位右移运算
     }
 }
