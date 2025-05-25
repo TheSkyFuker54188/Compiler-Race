@@ -3,89 +3,125 @@ package AST;
 import Midcode.midCode;
 import Word.Word;
 
+/**
+ * 算术表达式节点类 - 处理数学运算表达式
+ * 
+ * 当我们看到 a + b 或者 x * y 这样的算术表达式时，
+ * 编译器会创建一个Arith节点来表示。它包含：
+ * - 操作符（+, -, *, /, %）
+ * - 左操作数和右操作数
+ * 
+ * 就像数学课上的运算树，每个节点都是一个运算操作
+ */
 public class Arith extends Expr {
-    public Expr exp1, exp2;
+    /* 左侧操作数表达式 */
+    public Expr leftOperand, rightOperand;
 
-    public Arith(Word op, Expr exp1, Expr exp2) {
-        super(op);
-        this.exp1 = exp1;
-        this.exp2 = exp2;
+    /**
+     * 创建算术表达式节点
+     * 
+     * @param operatorToken 运算符词法单元
+     * @param leftOperand   左操作数表达式
+     * @param rightOperand  右操作数表达式
+     */
+    public Arith(Word operatorToken, Expr leftOperand, Expr rightOperand) {
+        super(operatorToken);
+        this.leftOperand = leftOperand;
+        this.rightOperand = rightOperand;
     }
 
+    /**
+     * 检查是否可以在编译期计算出结果
+     * 
+     * 只有当左右两个操作数都是编译期常量时，整个算术表达式才能预先计算。
+     * 比如 2 + 3 可以直接算成 5，但 a + 3 就不行（a是变量）
+     * 这种编译期计算叫做"常量折叠"优化
+     */
     @Override
     public boolean canculculate() {
-        boolean a1 = exp1.canculculate();
-        boolean a2 = exp2.canculculate();
-        if (a1 && a2) {
+        boolean leftCanCompute = leftOperand.canculculate();
+        boolean rightCanCompute = rightOperand.canculculate();
+
+        if (leftCanCompute && rightCanCompute) {
             this.isvalue = true;
-            String midop = op.getContent();
-            if (midop.equals("+")) {
-                value = exp1.value + exp2.value;
-            } else if (midop.equals("-")) {
-                value = exp1.value - exp2.value;
-            } else if (midop.equals("*")) {
-                value = exp1.value * exp2.value;
-            } else if (midop.equals("/")) {
-                value = exp1.value / exp2.value;
-            } else if (midop.equals("%")) {
-                value = exp1.value % exp2.value;
+            String operatorSymbol = op.getContent();
+
+            // 根据操作符执行相应的数学运算
+            if (operatorSymbol.equals("+")) {
+                value = leftOperand.value + rightOperand.value;
+            } else if (operatorSymbol.equals("-")) {
+                value = leftOperand.value - rightOperand.value;
+            } else if (operatorSymbol.equals("*")) {
+                value = leftOperand.value * rightOperand.value;
+            } else if (operatorSymbol.equals("/")) {
+                value = leftOperand.value / rightOperand.value;
+            } else if (operatorSymbol.equals("%")) {
+                value = leftOperand.value % rightOperand.value;
             }
             return true;
         }
         return false;
     }
 
+    /**
+     * 化简表达式并生成中间代码
+     * 
+     * 如果能预先计算，就返回常量节点；
+     * 否则生成三地址码的形式：temp = operand1 op operand2
+     */
     public Expr reduce() {
-
+        // 如果已经计算出常量值，直接返回常量节点
         if (isvalue) {
             return new Constant(new Word(String.valueOf(value)));
         }
 
-        Temp t = new Temp(op);
-        String midop = op.getContent();
-        midCode.operation ope = midCode.operation.DEBUG;
-        if (midop.equals("+")) {
-            ope = midCode.operation.PLUSOP;
-        } else if (midop.equals("-")) {
-            ope = midCode.operation.MINUOP;
-        } else if (midop.equals("*")) {
-            ope = midCode.operation.MULTOP;
-        } else if (midop.equals("/")) {
-            ope = midCode.operation.DIVOP;
-        } else if (midop.equals("%")) {
-            ope = midCode.operation.MODOP;
+        // 生成临时变量存储运算结果
+        Temp temporaryResult = new Temp(op);
+        String operatorSymbol = op.getContent();
+        midCode.operation operationType = midCode.operation.DEBUG;
+
+        // 将高级语言的操作符映射到中间代码操作类型
+        if (operatorSymbol.equals("+")) {
+            operationType = midCode.operation.PLUSOP;
+        } else if (operatorSymbol.equals("-")) {
+            operationType = midCode.operation.MINUOP;
+        } else if (operatorSymbol.equals("*")) {
+            operationType = midCode.operation.MULTOP;
+        } else if (operatorSymbol.equals("/")) {
+            operationType = midCode.operation.DIVOP;
+        } else if (operatorSymbol.equals("%")) {
+            operationType = midCode.operation.MODOP;
         }
 
-        emit(new midCode(ope, t.toString(), exp1.reduce().toString(), exp2.reduce().toString()));
-        return t;
+        // 发射中间代码：temp = left op right
+        emit(new midCode(operationType, temporaryResult.toString(),
+                leftOperand.reduce().toString(), rightOperand.reduce().toString()));
+        return temporaryResult;
     }
 
+    /**
+     * 执行算术运算的实际计算
+     * 递归计算左右操作数的值，然后根据操作符进行运算
+     */
     @Override
     public int calculate() {
-        int value = 0;
-        int left1 = exp1.calculate();
-        int left2 = exp2.calculate();
-        String midop = op.getContent();
-        if (midop.equals("+")) {
-            value = left1 + left2;
-        } else if (midop.equals("-")) {
-            value = left1 - left2;
-        } else if (midop.equals("*")) {
-            value = left1 * left2;
-        } else if (midop.equals("/")) {
-            value = left1 / left2;
-        } else if (midop.equals("%")) {
-            value = left1 % left2;
+        int resultValue = 0;
+        int leftValue = leftOperand.calculate();
+        int rightValue = rightOperand.calculate();
+        String operatorSymbol = op.getContent();
+
+        // 执行对应的数学运算
+        if (operatorSymbol.equals("+")) {
+            resultValue = leftValue + rightValue;
+        } else if (operatorSymbol.equals("-")) {
+            resultValue = leftValue - rightValue;
+        } else if (operatorSymbol.equals("*")) {
+            resultValue = leftValue * rightValue;
+        } else if (operatorSymbol.equals("/")) {
+            resultValue = leftValue / rightValue;
+        } else if (operatorSymbol.equals("%")) {
+            resultValue = leftValue % rightValue;
         }
-        return value;
+        return resultValue;
     }
-
-    //    public Expr reduce() {
-//        Expr x = gen();
-//        Temp t = new Temp(midCodes,op);
-//        emit(new midCode(midCode.operation.ASSIGNOP,t,)t.toString() + " = " + x.toString());
-//        return t;
-//    }
-
-
 }
