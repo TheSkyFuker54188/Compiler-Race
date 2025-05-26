@@ -1,80 +1,80 @@
 package Word;
 
 /**
- * 词汇单元类 - 这是编译器词法分析阶段产生的基本单位
- * 每个Word对象代表源代码中的一个有意义的符号，比如关键字、标识符、操作符等
- * 就像把一篇文章拆分成一个个单词一样，编译器也要把代码拆分成这样的词汇单元
+ * 词法符号单元 - 编译器前端词法分析器的基础输出单位
+ * 该类采用封装模式来表示源码解析过程中提取的语法元素
+ * 每个实例承载着编译流程中的一个离散语言构件信息
  */
 public class Word {
-    /* 词汇类型编号 - 用来区分这是什么类型的符号（比如1代表if，2代表标识符等） */
-    private final int tokenCategory;
+    /* 符号类别标识符 - 用于分类不同语义角色的语法元素 */
+    private final int categoryId;
 
-    /* 词汇的原始文本 - 就是在源代码中实际写的字符串 */
-    private final String lexicalText;
+    /* 符号原始内容 - 保存从源代码提取的字符序列 */
+    private final String rawContent;
 
-    /* 这个词汇在源文件中的行号 - 方便出错时定位问题 */
-    private int sourcePosition;
+    /* 位置跟踪信息 - 记录该符号在输入流中的位置索引 */
+    private int lineIndex;
 
     /**
-     * 最常用的构造方法 - 创建一个完整的词汇单元
-     * 就像给每个单词贴上标签：这是什么类型，内容是什么，在第几行
+     * 主要实例化方法 - 使用构建者模式创建符号实例
+     * 通过传入语义分类、文本载荷和位置元数据来构造完整的词法单元
      */
-    public Word(int tokenCategory, String lexicalText, int sourcePosition) {
-        this.tokenCategory = tokenCategory;
-        this.lexicalText = lexicalText;
-        this.sourcePosition = sourcePosition;
+    public Word(int categoryId, String rawContent, int lineIndex) {
+        this.categoryId = categoryId;
+        this.rawContent = rawContent;
+        this.lineIndex = lineIndex;
     }
 
     /**
-     * 空白构造方法 - 有时候需要创建一个占位符
-     * 就像准备一张空白的标签纸，等待填写内容
+     * 默认初始化方法 - 创建空白状态的符号占位符
+     * 所有属性设置为初始值，用于特殊场景的延迟赋值
      */
     public Word() {
-        this.tokenCategory = 0;
-        this.lexicalText = "";
-        this.sourcePosition = 0;
+        this.categoryId = 0;
+        this.rawContent = "";
+        this.lineIndex = 0;
     }
 
     /**
-     * 简化构造方法 - 只指定文本内容，类型默认为0
-     * 适用于一些特殊情况，比如处理字符串字面量
+     * 文本专用构造方法 - 针对纯文本内容的轻量级创建方式
+     * 适用于字符串字面量等无需复杂分类的场景
      */
-    public Word(String lexicalText) {
-        this.tokenCategory = 0;
-        this.lexicalText = lexicalText;
-        this.sourcePosition = 0;
+    public Word(String rawContent) {
+        this.categoryId = 0;
+        this.rawContent = rawContent;
+        this.lineIndex = 0;
     }
 
     /**
-     * 获取词汇类型编号
-     * 编译器后续阶段需要根据这个编号来判断如何处理这个词汇
+     * 获取符号分类标识
+     * 返回该词法单元所属的语义类别编号
      */
     public int getSymnumber() {
-        return this.tokenCategory;
+        return this.categoryId;
     }
 
     /**
-     * 获取词汇的原始文本内容
-     * 这是用户在源代码中实际写的东西
+     * 提取符号文本载荷
+     * 获取该符号承载的原始字符串信息
      */
     public String getContent() {
-        return this.lexicalText;
+        return this.rawContent;
     }
 
     /**
-     * 获取词汇所在的行号
-     * 调试和错误报告时特别有用
+     * 查询位置跟踪信息
+     * 返回该符号在源码中的行位置索引
      */
     public int getLine() {
-        return this.sourcePosition;
+        return this.lineIndex;
     }
 
     /**
-     * 转换为字符串表示
-     * 直接返回词汇内容，这样打印Word对象时就能看到实际的文本
+     * 字符串序列化方法
+     * 将符号对象转换为其承载的文本表示形式
      */
     @Override
     public String toString() {
-        return this.lexicalText;
+        return this.rawContent;
     }
 }

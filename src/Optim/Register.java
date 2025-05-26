@@ -23,13 +23,6 @@ public class Register {
         return reg;
     }
 
-//    public String usetemp(String name) {
-//        if (name.equals("$t3") || name.equals("$t4") || name.equals("$t5") || name.equals("$t6") || name.equals("$t7") ) {
-//            lists.add(name);
-//        }
-//        return name;
-//    }
-
     public ArrayList<String> getReverlists() {
         return reverlists;
     }

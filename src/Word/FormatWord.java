@@ -1,66 +1,66 @@
 package Word;
 
 /**
- * 格式化词汇单元类 - 这是Word类的增强版本
+ * 扩展符号单元类 - 基于基础Word类的功能增强版本
  * 
- * 有些词汇不仅要记录它们是什么，还要记录额外的信息
- * 比如数字除了文本内容，还要记录它的数值；
- * 格式字符串除了内容，还要记录格式是否正确
+ * 该类采用装饰者模式对基础词法符号进行能力扩展
+ * 主要用于处理需要额外元数据的复杂语法构件
+ * 例如：数值字面量需要保存计算值，格式串需要验证规范性
  * 
- * 就像给普通标签加上了更多的属性标记
+ * 设计思路：通过组合方式扩展基础符号的属性域
  */
 public class FormatWord extends Word {
 
-    /* 数值属性 - 如果这个词汇代表一个数字，这里存储它的实际数值 */
-    private int numericalValue;
+    /* 数值缓存域 - 存储符号对应的数学值（适用于数字字面量） */
+    private int cachedValue;
 
-    /* 有效性标记 - 标记这个词汇是否符合语法规则 */
-    private boolean isValidFormat;
+    /* 合规性标志位 - 标识该符号是否通过格式验证检查 */
+    private boolean complianceFlag;
 
     /**
-     * 创建一个带有格式信息的词汇单元
+     * 富属性符号构造器 - 创建具备扩展功能的词法单元
      * 
-     * 这个构造方法适用于那些需要额外验证的词汇，比如：
-     * - 数字字面量（需要验证格式是否正确）
-     * - 格式化字符串（需要检查%d、%c等格式符是否合法）
+     * 该方法适用于需要进行深度语义分析的符号类型：
+     * - 整型字面量（需要保存解析后的数值）
+     * - 格式化输出串（需要验证占位符语法正确性）
      * 
-     * @param tokenCategory  词汇类型（继承自父类）
-     * @param lexicalText    词汇文本内容（继承自父类）
-     * @param sourcePosition 源码行号（继承自父类）
-     * @param numericalValue 关联的数值（如果适用）
-     * @param isValidFormat  是否通过格式验证
+     * @param categoryId     符号分类标识（继承属性）
+     * @param rawContent     原始文本内容（继承属性）
+     * @param lineIndex      源码位置索引（继承属性）
+     * @param cachedValue    关联数值缓存
+     * @param complianceFlag 格式合规性检查结果
      */
-    public FormatWord(int tokenCategory, String lexicalText, int sourcePosition,
-            int numericalValue, boolean isValidFormat) {
-        /* 先调用父类构造方法，设置基本的词汇信息 */
-        super(tokenCategory, lexicalText, sourcePosition);
+    public FormatWord(int categoryId, String rawContent, int lineIndex,
+            int cachedValue, boolean complianceFlag) {
+        /* 委托父类处理基础属性初始化 */
+        super(categoryId, rawContent, lineIndex);
 
-        /* 然后设置这个类特有的格式信息 */
-        this.numericalValue = numericalValue;
-        this.isValidFormat = isValidFormat;
+        /* 设置本类特有的扩展属性 */
+        this.cachedValue = cachedValue;
+        this.complianceFlag = complianceFlag;
     }
 
     /**
-     * 获取数值属性
+     * 数值缓存访问器
      * 
-     * 对于数字字面量，返回它们的实际数值
-     * 对于其他类型的词汇，这个值可能没有意义
+     * 针对数字字面量符号，返回其解析后的数学值
+     * 对于非数值类型符号，该返回值不具备语义意义
      * 
-     * @return 存储的数值
+     * @return 缓存的数值结果
      */
     public int getNum() {
-        return this.numericalValue;
+        return this.cachedValue;
     }
 
     /**
-     * 检查格式有效性
+     * 合规性状态查询器
      * 
-     * 告诉我们这个词汇是否符合预期的格式规则
-     * true表示格式正确，false表示存在格式错误
+     * 检查该符号是否满足预定义的格式规范要求
+     * true表示通过验证，false表示存在格式缺陷
      * 
-     * @return 格式验证结果
+     * @return 格式验证的布尔结果
      */
     public boolean isCorrect() {
-        return this.isValidFormat;
+        return this.complianceFlag;
     }
 }

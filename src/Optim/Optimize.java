@@ -27,7 +27,7 @@ public class Optimize {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        System.setOut(out);    //调整输出路径为optimize文件
+        System.setOut(out);    
         for (midCode m : newmidCodes) {
             System.out.println(m.toString());
         }
