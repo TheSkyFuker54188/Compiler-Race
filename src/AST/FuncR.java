@@ -75,7 +75,7 @@ public class FuncR extends Expr {
             }
         }
 
-        // 第四步：发起调用 - 跳转到目标函数执行
+        // 第四步：发起调用 - 跳转到目标函数
         emit(new midCode(midCode.operation.CALL, op.getContent()));
 
         // 第五步：处理返回值 - 根据函数类型决定是否接收返回值

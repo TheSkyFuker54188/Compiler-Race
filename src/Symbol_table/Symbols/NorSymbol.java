@@ -28,7 +28,7 @@ public class NorSymbol {
 
     /**
      * 默认构造器 - 创建空白符号实例
-     * 适用于需要延迟初始化的场景
+     * 用于需要延迟初始化的场景
      */
     public NorSymbol() {
     }

@@ -15,7 +15,7 @@ package AST;
  * 每个定义都会有一个左值(lval)作为被定义的目标标识符。
  */
 public class Def extends Node {
-    // 被定义的左值 - 通常是变量名或数组名
+    // 被定义的左值 - 变量名或数组名
     Lval targetVariable;
 
     /**

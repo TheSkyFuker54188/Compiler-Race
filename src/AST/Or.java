@@ -73,7 +73,7 @@ public class Or extends Node {
         // 所有条件都失败，跳出while循环
         emit(new midCode(midCode.operation.GOTO, "Loop" + String.valueOf(loopId) + "end"));
 
-        // 设置成功标签位置（继续循环体执行）
+        // 设置成功标签位置（继续循环体运行）
         emit(new midCode(midCode.operation.Jump, "Jump" + successJumpLabel));
     }
 }

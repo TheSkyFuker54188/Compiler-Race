@@ -24,9 +24,9 @@ import Word.Word;
  * - 参数数组：需要考虑指针传递的情况
  */
 public class Array extends Lval {
-    // 临时变量 - 用于存储计算过程中的中间结果
+    // 临时变量 - 存储计算过程中的中间结果
     public Expr temporaryStorage;
-    // 第二维信息 - 用于指针传递时记录维度信息
+    // 第二维信息 - 指针传递时记录维度信息
     public String secondDimensionInfo;
 
     // 索引表达式 - 数组访问的"坐标系统"

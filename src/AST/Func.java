@@ -69,7 +69,7 @@ public class Func extends Node {
     }
 
     /**
-     * 生成中间代码 - 建立"功能车间"
+     * 生成中间代码 - 建造"功能车间"
      * 
      * 这个方法就像建设一个专门的生产车间：
      * 1. 注册函数到符号表(在工厂目录中登记车间)
@@ -86,7 +86,7 @@ public class Func extends Node {
         }
 
         String typeString = returnType == 0 ? "void" : "int";
-        // 创建新的作用域 - 为函数建立独立的工作环境
+        // 创建新的作用域 - 为函数建造独立的工作环境
         inttable = new IntergerTable(inttable);
 
         // 获取函数块标识符并设置入口标签

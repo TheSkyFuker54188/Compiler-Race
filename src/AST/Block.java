@@ -66,7 +66,7 @@ public class Block extends Stmt {
         blockNumber = ++globalBlockCounter;
         emit(new midCode(midCode.operation.LABEL, String.valueOf(blockNumber), "start"));
 
-        // 执行车间内的所有工作项目
+        // 运行车间内的所有工作项目
         for (BlockItem item : blockItems) {
             item.gen();
         }
@@ -89,7 +89,7 @@ public class Block extends Stmt {
     public void gen(int functionBlockNumber) {
         blockNumber = functionBlockNumber;
 
-        // 执行函数体内的所有工作项目
+        // 运行函数体内的所有工作项目
         for (BlockItem item : blockItems) {
             item.gen();
         }

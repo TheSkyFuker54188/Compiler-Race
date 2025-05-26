@@ -46,7 +46,6 @@ public class Program extends Node {
      * 严格按照这个顺序执行，确保编译过程的正确性。
      */
     public void gen() {
-        // 第一阶段：编译全局声明 - 建立程序的基础环境
         for (Decl globalDeclaration : globalDeclarations) {
             globalDeclaration.gen();
         }

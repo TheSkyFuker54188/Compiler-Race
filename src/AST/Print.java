@@ -51,7 +51,6 @@ public class Print extends Stmt {
      */
     @Override
     public void gen() {
-        // 预处理所有输出表达式 - 准备要播报的数字内容
         for (Expr expression : outputExpressions) {
             expression.canculculate();
         }

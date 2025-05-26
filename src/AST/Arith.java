@@ -46,7 +46,7 @@ public class Arith extends Expr {
             this.isvalue = true;
             String operatorSymbol = op.getContent();
 
-            // 根据操作符执行相应的数学运算
+            // 根据操作符进行相应的数学运算
             if (operatorSymbol.equals("+")) {
                 value = leftOperand.value + rightOperand.value;
             } else if (operatorSymbol.equals("-")) {
@@ -110,7 +110,7 @@ public class Arith extends Expr {
         int rightValue = rightOperand.calculate();
         String operatorSymbol = op.getContent();
 
-        // 执行对应的数学运算
+        // 进行对应的数学运算
         if (operatorSymbol.equals("+")) {
             resultValue = leftValue + rightValue;
         } else if (operatorSymbol.equals("-")) {

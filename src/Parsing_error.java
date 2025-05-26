@@ -10,17 +10,16 @@ import Word.Word;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List; // Changed from ArrayList to List for interface usage
+import java.util.List;
 
-public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or similar
+public class Parsing_error {
 
-    private final List<Word> tokenStream; // Renamed from 'words'
-    private int currentTokenIndex = 0; // Renamed from 'index'
+    private final List<Word> tokenStream;
+    private int currentTokenIndex = 0;
 
-    private FuncTable functionSymbolTable = new FuncTable(); // Renamed from 'functable'
-    private IntergerTable variableSymbolTable = new IntergerTable(); // Renamed from 'inttable'
+    private FuncTable functionSymbolTable = new FuncTable();
+    private IntergerTable variableSymbolTable = new IntergerTable();
 
-    // Consider a dedicated ErrorInfo class instead of int[][]
     private static class ErrorInfo {
         final int lineNumber;
         final int errorCode;
@@ -31,122 +30,88 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         }
     }
 
-    private final List<ErrorInfo> detectedErrors = new ArrayList<>(); // Replaces errorarray and errorcount
+    private final List<ErrorInfo> detectedErrors = new ArrayList<>();
 
-    private int loopNestingLevel = 0; // Renamed from 'CircleLevel'
-    private int currentFunctionReturnType = 0; // 0 for void, 1 for int. Renamed from 'functype'
-    private boolean withinConditionalConstruct = false; // Renamed from 'inCond'
-    private boolean isLastStatementReturn = false; // Renamed from 'isLast'
-    // private boolean hasvoid = false; // This variable was not used, consider
-    // removing if still unused.
-    private ArrayList<Integer> dimensionTracker = new ArrayList<>(); // Renamed from 'maxarray'
-    private int functionDepth = 0; // Renamed from 'intofunc'
+    private int loopNestingLevel = 0;
+    private int currentFunctionReturnType = 0;
+    private boolean withinConditionalConstruct = false;
+    private boolean isLastStatementReturn = false;
+    private ArrayList<Integer> dimensionTracker = new ArrayList<>();
+    private int functionDepth = 0;
 
-    public Parsing_error(ArrayList<Word> tokenSequence) { // Parameter name changed
+    public Parsing_error(ArrayList<Word> tokenSequence) {
         this.tokenStream = tokenSequence;
-        this.dimensionTracker.add(0); // Initialize dimension tracker
-        performSyntaxAnalysis(); // Renamed from 'analyse'
+        this.dimensionTracker.add(0);
+        performSyntaxAnalysis();
 
         if (!detectedErrors.isEmpty()) {
             System.out.println("Syntax errors detected in your code:\nBelow are the identified issues:");
-            reportErrors(); // Renamed from 'errorout'
-            System.exit(1); // Exit if errors are present
+            reportErrors();
+            System.exit(1);
         }
     }
 
-    // Renamed from analyse()
     public void performSyntaxAnalysis() {
-        parseCompilationUnit(); // Renamed from CompUnit()
+        parseCompilationUnit();
     }
 
-    // Renamed from getWord()
     private Word consumeToken() {
         if (currentTokenIndex < tokenStream.size()) {
             return tokenStream.get(currentTokenIndex++);
         }
-        // Return a special 'EndOfFile' token or handle error, instead of a generic new
-        // Word()
-        return new Word(); // Placeholder, ideally an EOF token or specific error handling
+        return new Word();
     }
 
-    // Renamed from showWord()
     private Word peekNextToken() {
         if (currentTokenIndex < tokenStream.size()) {
             return tokenStream.get(currentTokenIndex);
         }
-        return new Word(); // Placeholder, EOF token or error handling
+        return new Word();
     }
 
-    // Renamed from showWord(int num)
     private Word peekTokenAt(int lookaheadIndex) {
         if (lookaheadIndex < tokenStream.size()) {
             return tokenStream.get(lookaheadIndex);
         }
-        return new Word(); // Placeholder, EOF token or error handling
+        return new Word();
     }
 
-    // Renamed from NextIsExp(Word w)
-    // This method's logic might need adjustment based on how Word objects are
-    // structured
-    // Assuming Word has methods like isIdentifier(), isIntegerConstant(), etc.
     private boolean isNextTokenExpressionStart(Word token) {
         String content = token.getContent();
-        int symbolNumber = token.getSymnumber(); // Assuming getSymnumber() maps to token types
-
-        // Example of more direct checks if Word class supports them:
-        // if (token.isOperator("(") || token.isOperator("+") || token.isOperator("-")
-        // || token.isOperator("!")) {
-        // return true;
-        // }
-        // if (token.isIdentifier() || token.isIntegerConstant()) {
-        // return true;
-        // }
+        int symbolNumber = token.getSymnumber();
 
         if ("(".equals(content) || "+".equals(content) || "-".equals(content) || "!".equals(content)) {
             return true;
         }
-        // Assuming symbolNumber 1 is IDENFR and 2 is INTCON based on original comments
         return symbolNumber == 1 || symbolNumber == 2;
     }
 
-    // This method seems to be for debugging, can be kept or removed
     private void indicateSyntaxErrorPosition() {
         System.out.print("---------------SYNTAX ERROR DETECTED-------------");
     }
 
-    // Renamed from errordeal(int type, int line)
     private void recordError(int errorCode, int lineNumber) {
         detectedErrors.add(new ErrorInfo(lineNumber, errorCode));
     }
 
-    // Renamed from errorout()
     private void reportErrors() {
-        // Sort errors by line number before printing
         detectedErrors.sort(Comparator.comparingInt(e -> e.lineNumber));
-
         for (ErrorInfo error : detectedErrors) {
-            // The original code used (char) ('a' + error.errorCode). Ensure this mapping is
-            // still desired.
             System.out.println(error.lineNumber + " " + (char) ('a' + error.errorCode));
         }
     }
 
-    // Renamed from CompUnit()
     private void parseCompilationUnit() {
-        // Original logic: while (!showWord(index + 2).getContent().equals("(")) Decl();
-        // This peeks three tokens ahead. Let's make it clearer.
         while (currentTokenIndex + 2 < tokenStream.size() &&
                 !peekTokenAt(currentTokenIndex + 2).getContent().equals("(")) {
-            parseDeclaration(); // Renamed from Decl()
+            parseDeclaration();
         }
 
-        // Original logic: while (!showWord(index + 1).getContent().equals("main"))
-        // FuncDef();
         while (currentTokenIndex + 1 < tokenStream.size() &&
                 !peekTokenAt(currentTokenIndex + 1).getContent().equals("main")) {
-            parseFunctionDefinition(); // Renamed from FuncDef()
+            parseFunctionDefinition();
         }
-        parseMainFunctionDefinition(); // Renamed from MainFuncDef()
+        parseMainFunctionDefinition();
     }
 
     private void parseDeclaration() {
@@ -155,7 +120,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             parseVariableDeclaration();
         }
-        // System.out.print("<Decl>\n");
     }
 
     private void parseConstantDeclaration() {
@@ -170,22 +134,20 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals(";")) {
                 consumeToken();
             } else {
-                recordError(8, sym.getLine()); // i类错误
+                recordError(8, sym.getLine()); 
             }
         } else {
             indicateSyntaxErrorPosition();
         }
-        // System.out.print("<ConstDecl>\n");
     }
 
     private void parseBaseType() {
         if (!consumeToken().getContent().equals("int")) {
             indicateSyntaxErrorPosition();
         }
-        // System.out.print("<BType>\n");
     }
 
-    private NorSymbol parseConstantDefinition() { // 暂时不考虑多维数组每一维的个数
+    private NorSymbol parseConstantDefinition() {
         Word w = consumeToken();
         String name = w.getContent();
         NorSymbol sym = new NorSymbol();
@@ -196,10 +158,10 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                 count++;
                 Word w1 = consumeToken();
                 parseConstantExpression();
-                if (peekNextToken().getContent().equals("]")) { // 使用[作为行号标记
+                if (peekNextToken().getContent().equals("]")) { 
                     consumeToken();
                 } else {
-                    recordError(10, w1.getLine()); // 错误处理k型缺少】
+                    recordError(10, w1.getLine()); 
                 }
             }
             if (!consumeToken().getContent().equals("=")) {
@@ -207,7 +169,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             }
             parseConstantInitializationValue();
 
-            if (variableSymbolTable.contains(name)) { // 错误处理b型名字重定义
+            if (variableSymbolTable.contains(name)) { 
                 recordError(1, line);
             } else {
                 if (count == 0) {
@@ -224,7 +186,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         }
 
         return sym;
-        // System.out.print("<ConstDef>\n");
     }
 
     private void parseConstantInitializationValue() {
@@ -245,7 +206,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             parseConstantExpression();
         }
-        // System.out.print("<ConstInitVal>\n");
     }
 
     private void parseVariableDeclaration() {
@@ -259,9 +219,8 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         if (peekNextToken().getContent().equals(";")) {
             consumeToken();
         } else {
-            recordError(8, sym.getLine()); // i类错误类型
+            recordError(8, sym.getLine()); 
         }
-        // System.out.print("<VarDecl>\n");
     }
 
     private NorSymbol parseVariableDefinition() {
@@ -275,10 +234,10 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                 count++;
                 Word w1 = consumeToken();
                 parseConstantExpression();
-                if (peekNextToken().getContent().equals("]")) { // 使用[作为行号标记
+                if (peekNextToken().getContent().equals("]")) { 
                     consumeToken();
                 } else {
-                    recordError(10, w1.getLine()); // 错误处理k型
+                    recordError(10, w1.getLine());
                 }
             }
             if (peekNextToken().getContent().equals("=")) {
@@ -286,7 +245,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                 parseInitializationValue();
             }
 
-            if (variableSymbolTable.contains(name)) { // 错误处理b型
+            if (variableSymbolTable.contains(name)) {
                 recordError(1, line);
             } else {
                 if (count == 0) {
@@ -302,7 +261,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             indicateSyntaxErrorPosition();
         }
         return sym;
-        // System.out.print("<VarDef>\n");
     }
 
     private void parseInitializationValue() {
@@ -323,12 +281,11 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             parseExpression();
         }
-        // System.out.print("<InitVal>\n");
     }
 
     private void parseFunctionDefinition() {
 
-        IntergerTable newtable = new IntergerTable(); // 进入函数创建一个新的作用域
+        IntergerTable newtable = new IntergerTable();
         newtable.setOut(variableSymbolTable);
         variableSymbolTable = newtable;
 
@@ -341,37 +298,35 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         if (w.getSymnumber() != 1) {
             indicateSyntaxErrorPosition();
         }
-        Word w1 = consumeToken(); // "("
+        Word w1 = consumeToken();
 
         if (peekNextToken().getContent().equals(")")) {
             consumeToken();
         } else if (peekNextToken().getContent().equals("{")) {
-            recordError(9, w1.getLine()); // j类错误缺少）
+            recordError(9, w1.getLine());
         } else {
             list = parseFunctionParameters();
             if (peekNextToken().getContent().equals(")")) {
                 consumeToken();
             } else {
-                recordError(9, w1.getLine()); // j类错误缺少）
+                recordError(9, w1.getLine());
             }
         }
 
-        if (functionSymbolTable.contains(name)) { // 错误处理b型未定义
+        if (functionSymbolTable.contains(name)) {
             recordError(1, line);
         } else {
-            FuncSymbol sym = new FuncSymbol(name, list, type); // 函数定义中增加声明
+            FuncSymbol sym = new FuncSymbol(name, list, type);
             functionSymbolTable.add(name, sym);
         }
 
         functionDepth = 1;
         Word w2 = parseBlock();
         if (type == 1 && !isLastStatementReturn)
-            recordError(6, w2.getLine()); // g类错误缺少最后return语句
-
-        // System.out.print("<FuncDef>\n");
+            recordError(6, w2.getLine());
     }
 
-    private void parseMainFunctionDefinition() {// 在预判的时候就会确定符合要求，不进行每个的特殊处理
+    private void parseMainFunctionDefinition() {
 
         consumeToken();
         consumeToken();
@@ -384,8 +339,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         currentFunctionReturnType = 1;
         Word w1 = parseBlock();
         if (!isLastStatementReturn)
-            recordError(6, w1.getLine()); // g类错误
-        // System.out.print("<MainFuncDef>\n");
+            recordError(6, w1.getLine());
     }
 
     private int parseFunctionType() {
@@ -396,7 +350,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             return 1;
         else
             return -1;
-        // System.out.print("<FuncType>\n");
     }
 
     private ArrayList<NorSymbol> parseFunctionParameters() {
@@ -407,7 +360,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             list.add(parseFunctionParameter());
         }
         return list;
-        // System.out.print("<FuncFParams>\n");
     }
 
     private NorSymbol parseFunctionParameter() {
@@ -425,7 +377,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals("]")) {
                 consumeToken();
             } else {
-                recordError(10, w1.getLine()); // k型错误
+                recordError(10, w1.getLine());
             }
 
             while (peekNextToken().getContent().equals("[")) {
@@ -435,11 +387,11 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                 if (peekNextToken().getContent().equals("]")) {
                     consumeToken();
                 } else {
-                    recordError(10, w1.getLine()); // k型错误
+                    recordError(10, w1.getLine());
                 }
             }
         }
-        if (variableSymbolTable.contains(name)) { // 错误处理b型
+        if (variableSymbolTable.contains(name)) {
             recordError(1, line);
         }
         if (count == 0) {
@@ -451,7 +403,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             variableSymbolTable.add(name, sym);
             return sym;
         }
-        // System.out.print("<FuncFParam>\n");
     }
 
     private Word parseBlock() {
@@ -468,7 +419,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (functionDepth == 1) {
                 functionDepth = 0;
             } else {
-                IntergerTable newtable = new IntergerTable(); // 进入一个新的作用域时，创建新的符号表
+                IntergerTable newtable = new IntergerTable();
                 newtable.setOut(variableSymbolTable);
                 variableSymbolTable = newtable;
             }
@@ -482,7 +433,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             variableSymbolTable = variableSymbolTable.getOut();
         }
         return w;
-        // System.out.print("<Block>\n");
     }
 
     private void parseBlockItem() {
@@ -491,7 +441,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             parseStatement();
         }
-        // System.out.print("<BlockItem>\n");
     }
 
     private void parseStatement() {
@@ -505,7 +454,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals(")")) {
                 consumeToken();
             } else {
-                recordError(9, line); // j kind error
+                recordError(9, line);
             }
             parseStatement();
             if (peekNextToken().getContent().equals("else")) {
@@ -527,22 +476,22 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals(")")) {
                 consumeToken();
             } else {
-                recordError(9, line); // j kind error
+                recordError(9, line);
             }
-            loopNestingLevel++; // 循环层次增加
+            loopNestingLevel++;
             parseStatement();
             loopNestingLevel--;
             withinConditionalConstruct = false;
         } else if (peekNextToken().getContent().equals("break") || peekNextToken().getContent().equals("continue")) {
             Word w = consumeToken();
 
-            if (loopNestingLevel == 0) // m型错误
+            if (loopNestingLevel == 0)
                 recordError(12, w.getLine());
 
             if (peekNextToken().getContent().equals(";")) {
                 consumeToken();
             } else {
-                recordError(8, w.getLine()); // i类错误
+                recordError(8, w.getLine());
             }
 
         } else if (peekNextToken().getContent().equals("return")) {
@@ -550,27 +499,20 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                 isLastStatementReturn = true;
             Word w = consumeToken();
             int line = w.getLine();
-            // if(showWord().getContent().equals(";")){
-            // getWord();
-            // }else{
-            // Exp();
-            // if(!getWord().getContent().equals(";"))
-            // error();
-            // }
             if (isNextTokenExpressionStart(peekNextToken())) {
                 parseExpression();
                 if (currentFunctionReturnType == 0)
-                    recordError(5, line); // f型错误
+                    recordError(5, line);
                 if (peekNextToken().getContent().equals(";")) {
                     consumeToken();
                 } else {
-                    recordError(8, line); // i kind error
+                    recordError(8, line);
                 }
             } else {
                 if (peekNextToken().getContent().equals(";")) {
                     consumeToken();
                 } else {
-                    recordError(8, line); // i kind error
+                    recordError(8, line);
                 }
             }
         } else if (peekNextToken().getContent().equals("printf")) {
@@ -587,7 +529,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             int num = w2.getNum();
 
             if (!correct)
-                recordError(0, count2); // a类错误
+                recordError(0, count2);
 
             while (peekNextToken().getContent().equals(",")) {
                 symnum++;
@@ -598,19 +540,15 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals(")")) {
                 consumeToken();
             } else {
-                recordError(9, count2); // j kind error
+                recordError(9, count2);
             }
             if (peekNextToken().getContent().equals(";")) {
                 consumeToken();
             } else {
-                recordError(8, count2); // i kind error
+                recordError(8, count2);
             }
-            // if(!getWord().getContent().equals(")"))
-            // error();
-            // if(!getWord().getContent().equals(";"))
-            // error();
 
-            if (num != symnum) // l类错误
+            if (num != symnum)
                 recordError(11, count1);
 
         } else if (peekNextToken().getContent().equals(";")) {
@@ -622,17 +560,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             } else if (peekTokenAt(currentTokenIndex + 1).getContent().equals("(")) {
                 flag1 = 2;
             } else if (peekTokenAt(currentTokenIndex + 1).getContent().equals("[")) {
-                // int k=index+1; //有可能会出问题就是
-                // while (!showWord(k).getContent().equals(";")){
-                // if(showWord(k).getContent().equals("=")){
-                // break;
-                // }
-                // k++;
-                // }
-                // if(showWord(k).getContent().equals("="))
-                // flag1=1;
-                // else
-                // flag1=2;
                 int k = currentTokenIndex + 1;
                 while (peekTokenAt(k).getContent().equals("[")) {
                     k++;
@@ -667,7 +594,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (flag1 == 1) {
 
                 NorSymbol sym = parseLValue();
-                if (sym.isConst()) { // h型错误
+                if (sym.isConst()) {
                     recordError(7, sym.getLine());
                 }
 
@@ -681,19 +608,19 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                     if (peekNextToken().getContent().equals(")")) {
                         consumeToken();
                     } else {
-                        recordError(9, line); // j kind error
+                        recordError(9, line);
                     }
                     if (peekNextToken().getContent().equals(";")) {
                         consumeToken();
                     } else {
-                        recordError(8, line); // i kind error
+                        recordError(8, line);
                     }
                 } else {
                     parseExpression();
                     if (peekNextToken().getContent().equals(";")) {
                         consumeToken();
                     } else {
-                        recordError(8, line); // i kind error
+                        recordError(8, line);
                     }
                 }
             } else {
@@ -708,22 +635,19 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals(";")) {
                 consumeToken();
             } else {
-                recordError(8, w.getLine()); // i kind error缺;
+                recordError(8, w.getLine());
             }
         }
-        // System.out.print("<Stmt>\n");
     }
 
     private Word parseExpression() {
         Word w = peekNextToken();
         parseAdditiveExpression();
         return w;
-        // System.out.print("<Exp>\n");
     }
 
     private void parseCondition() {
         parseLogicalOrExpression();
-        // System.out.print("<Cond>\n");
     }
 
     private NorSymbol parseLValue() {
@@ -736,7 +660,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             indicateSyntaxErrorPosition();
 
         IntergerTable table = variableSymbolTable;
-        while (table != null) { // 未定义名字c类错误
+        while (table != null) {
             if (table.contains(name)) {
                 flag = 1;
                 sym = table.get(name);
@@ -757,13 +681,12 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             if (peekNextToken().getContent().equals("]")) {
                 consumeToken();
             } else {
-                recordError(10, w1.getLine()); // k型错误
+                recordError(10, w1.getLine());
             }
         }
         dimensionTracker.set(0, Math.max(dimensionTracker.get(0), arrayLevel));
         sym.setLine(line);
         return sym;
-        // System.out.print("<LVal>\n");
     }
 
     private void parsePrimaryExpression() {
@@ -782,14 +705,12 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             indicateSyntaxErrorPosition();
         }
-        // System.out.print("<PrimaryExp>\n");
     }
 
     private void parseNumber() {
         if (consumeToken().getSymnumber() != 2) {
             indicateSyntaxErrorPosition();
         }
-        // System.out.print("<Number>\n");
     }
 
     private void parseUnaryExpression() {
@@ -801,8 +722,8 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             int line = w.getLine();
             int flag = 0;
             if (!functionSymbolTable.contains(name)) {
-                recordError(2, line);// 错误处理c类
-                consumeToken(); // (
+                recordError(2, line);
+                consumeToken();
 
                 if (isNextTokenExpressionStart(peekNextToken())) {
                     dimensionTracker.add(0, 0);
@@ -811,43 +732,35 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                     if (peekNextToken().getContent().equals(")")) {
                         consumeToken();
                     } else {
-                        recordError(9, line); // j kind error
+                        recordError(9, line);
                     }
                 } else {
 
                     if (peekNextToken().getContent().equals(")")) {
                         consumeToken();
                     } else {
-                        recordError(9, line); // j kind error
+                        recordError(9, line);
                     }
                 }
 
             } else {
                 FuncSymbol sym = functionSymbolTable.get(name);
                 if (sym.getReturntype() == 0)
-                    dimensionTracker.set(0, 100); // for return type void maxarray=100
-
+                    dimensionTracker.set(0, 100);
                 ArrayList<NorSymbol> Fparas = sym.getParams();
                 ArrayList<Integer> Rparas = new ArrayList<>();
-                consumeToken(); // (
-                // if (showWord().getContent().equals(")")) {
-                // getWord();
-                // }else{
-                // FuncRParams();
-                // if (!getWord().getContent().equals(")"))
-                // error();
-                // }
+                consumeToken();
                 if (isNextTokenExpressionStart(peekNextToken())) {
                     dimensionTracker.add(0, 0);
                     Rparas = parseFunctionRParams();
                     dimensionTracker.remove(0);
                     if (Rparas.size() != Fparas.size()) {
-                        recordError(3, line); // d类型错误
+                        recordError(3, line);
                     } else {
                         for (int i = 0; i < Rparas.size(); i++) {
                             if (Rparas.get(i) != Fparas.get(i).getLevel()) {
                                 recordError(4, line);
-                                break; // e类型错误
+                                break;
                             }
                         }
                     }
@@ -855,7 +768,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                     if (peekNextToken().getContent().equals(")")) {
                         consumeToken();
                     } else {
-                        recordError(9, line); // j kind error
+                        recordError(9, line);
                     }
                 } else {
 
@@ -866,7 +779,7 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
                     if (peekNextToken().getContent().equals(")")) {
                         consumeToken();
                     } else {
-                        recordError(9, line); // j kind error
+                        recordError(9, line);
                     }
                 }
             }
@@ -876,7 +789,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             parsePrimaryExpression();
         }
-        // System.out.print("<UnaryExp>\n");
     }
 
     private void parseUnaryOperator() {
@@ -886,7 +798,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         } else {
             indicateSyntaxErrorPosition();
         }
-        // System.out.print("<UnaryOp>\n");
     }
 
     private ArrayList<Integer> parseFunctionRParams() {
@@ -901,7 +812,6 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
             list.add(dimensionTracker.get(0));
         }
         return list;
-        // System.out.print("<FuncRParams>\n");
     }
 
     private void parseMultiplicativeExpression() {
@@ -909,24 +819,20 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         while (true) {
             String s = peekNextToken().getContent();
             if (s.equals("*") || s.equals("/") || s.equals("%")) {
-                // System.out.print("<MulExp>\n");
                 consumeToken();
                 parseUnaryExpression();
             } else {
                 break;
             }
         }
-        // System.out.print("<MulExp>\n");
     }
 
     private void parseAdditiveExpression() {
         parseMultiplicativeExpression();
         while (peekNextToken().getContent().equals("+") || peekNextToken().getContent().equals("-")) {
-            // System.out.print("<AddExp>\n");
             consumeToken();
             parseMultiplicativeExpression();
         }
-        // System.out.print("<AddExp>\n");
     }
 
     private void parseRelationalExpression() {
@@ -934,49 +840,40 @@ public class Parsing_error { // Consider renaming to SyntaxErrorAnalyzer or simi
         while (true) {
             String s = peekNextToken().getContent();
             if (s.equals("<") || s.equals(">") || s.equals("<=") || s.equals(">=")) {
-                // System.out.print("<RelExp>\n");
                 consumeToken();
                 parseAdditiveExpression();
             } else {
                 break;
             }
         }
-        // System.out.print("<RelExp>\n");
     }
 
     private void parseEqualityExpression() {
         parseRelationalExpression();
         while (peekNextToken().getContent().equals("==") || peekNextToken().getContent().equals("!=")) {
-            // System.out.print("<EqExp>\n");
             consumeToken();
             parseRelationalExpression();
         }
-        // System.out.print("<EqExp>\n");
     }
 
     private void parseLogicalAndExpression() {
         parseEqualityExpression();
         while (peekNextToken().getContent().equals("&&")) {
-            // System.out.print("<LAndExp>\n");
             consumeToken();
             parseEqualityExpression();
         }
-        // System.out.print("<LAndExp>\n");
     }
 
     private void parseLogicalOrExpression() {
         parseLogicalAndExpression();
         while (peekNextToken().getContent().equals("||")) {
-            // System.out.print("<LOrExp>\n");
             consumeToken();
             parseLogicalAndExpression();
         }
-        // System.out.print("<LOrExp>\n");
     }
 
     private void parseConstantExpression() {
         parseAdditiveExpression();
-        // System.out.print("<ConstExp>\n");
     }
 
 }

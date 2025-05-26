@@ -34,7 +34,7 @@ public class FuncSymbol {
 
     /**
      * 简化函数构造器 - 仅指定返回类型的函数符号
-     * 适用于函数原型声明或特殊函数处理场景
+     * 用于函数原型声明或特殊函数场景
      * 
      * @param returnTypeCode 返回类型编码值
      */

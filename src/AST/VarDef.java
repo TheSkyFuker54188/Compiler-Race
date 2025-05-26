@@ -43,7 +43,6 @@ public class VarDef extends Def {
      */
     @Override
     public void gen() {
-        // 预处理所有初始化表达式 - 像提前准备装修材料
         for (ArrayList<Expr> expressionRow : initializationValues) {
             for (Expr singleExpression : expressionRow) {
                 singleExpression.canculculate();
@@ -53,19 +52,15 @@ public class VarDef extends Def {
         String variableName = targetVariable.op.getContent();
 
         if (targetVariable instanceof Id) {
-            // 处理普通变量定义 - 就像分配单间公寓
             if (initializationValues.size() == 0) {
-                // 无初始化的情况 - 毛坯房交付
                 emit(new midCode(midCode.operation.VAR, variableName, null, null));
             } else {
-                // 有初始化的情况 - 精装修交付
                 Expr initExpression = initializationValues.get(0).get(0);
                 emit(new midCode(midCode.operation.VAR, variableName, initExpression.reduce().toString(), null));
             }
             inttable.add(variableName, new VarSymbol(variableName, false, 0));
 
         } else if (targetVariable instanceof Array) {
-            // 处理数组定义 - 就像分配连排别墅
             Array arrayTarget = (Array) targetVariable;
             Expr firstDimension = arrayTarget.getOneindex();
             Expr secondDimension = arrayTarget.getTwoindex();
@@ -73,18 +68,15 @@ public class VarDef extends Def {
             int secondDimensionSize = 0;
 
             if (secondDimension == null) {
-                // 一维数组情况 - 分配一排房子
                 emit(new midCode(midCode.operation.ARRAY, variableName, String.valueOf(firstDimensionSize), null));
                 inttable.add(variableName, new ArraySymbol(variableName, false, 1));
             } else {
-                // 二维数组情况 - 分配整个小区
                 secondDimensionSize = secondDimension.calculate();
                 emit(new midCode(midCode.operation.ARRAY, variableName, String.valueOf(firstDimensionSize),
                         String.valueOf(secondDimensionSize)));
                 inttable.add(variableName, new ArraySymbol(variableName, false, 2, secondDimensionSize));
             }
 
-            // 数组初始化 - 逐个房间摆放家具
             for (int rowIndex = 0; rowIndex < initializationValues.size(); rowIndex++) {
                 for (int columnIndex = 0; columnIndex < initializationValues.get(rowIndex).size(); columnIndex++) {
                     int linearIndex = rowIndex * secondDimensionSize + columnIndex;

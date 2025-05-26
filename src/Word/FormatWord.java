@@ -3,15 +3,14 @@ package Word;
 /**
  * 扩展符号单元类 - 基于基础Word类的功能增强版本
  * 
- * 该类采用装饰者模式对基础词法符号进行能力扩展
- * 主要用于处理需要额外元数据的复杂语法构件
- * 例如：数值字面量需要保存计算值，格式串需要验证规范性
+ * 该类通过装饰者模式对基础词法符号进行能力扩展
+ * 支持数值字面量缓存和格式串验证等高级特性
  * 
  * 设计思路：通过组合方式扩展基础符号的属性域
  */
 public class FormatWord extends Word {
 
-    /* 数值缓存域 - 存储符号对应的数学值（适用于数字字面量） */
+    /* 数值缓存域 - 存储符号对应的数学值 */
     private int cachedValue;
 
     /* 合规性标志位 - 标识该符号是否通过格式验证检查 */
@@ -20,7 +19,7 @@ public class FormatWord extends Word {
     /**
      * 富属性符号构造器 - 创建具备扩展功能的词法单元
      * 
-     * 该方法适用于需要进行深度语义分析的符号类型：
+     * 该方法支持需要进行深度语义分析的符号类型：
      * - 整型字面量（需要保存解析后的数值）
      * - 格式化输出串（需要验证占位符语法正确性）
      * 
@@ -32,7 +31,7 @@ public class FormatWord extends Word {
      */
     public FormatWord(int categoryId, String rawContent, int lineIndex,
             int cachedValue, boolean complianceFlag) {
-        /* 委托父类处理基础属性初始化 */
+        /* 初始化父类基础属性 */
         super(categoryId, rawContent, lineIndex);
 
         /* 设置本类特有的扩展属性 */

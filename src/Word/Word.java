@@ -37,7 +37,7 @@ public class Word {
 
     /**
      * 文本专用构造方法 - 针对纯文本内容的轻量级创建方式
-     * 适用于字符串字面量等无需复杂分类的场景
+     * 用于字符串字面量等基础符号类型的快速构建
      */
     public Word(String rawContent) {
         this.categoryId = 0;

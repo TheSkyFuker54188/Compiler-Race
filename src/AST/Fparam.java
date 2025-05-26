@@ -26,7 +26,7 @@ public class Fparam extends Node {
     Id parameterName;
     // 参数维度级别 - 0:变量, 1:一维数组, 2:二维数组
     int dimensionLevel;
-    // 第二维大小表达式(仅用于二维数组)
+    // 第二维大小表达式(专用于二维数组)
     Expr secondDimensionSize;
 
     /**

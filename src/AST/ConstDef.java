@@ -47,7 +47,6 @@ public class ConstDef extends Def {
      */
     @Override
     public void gen() {
-        // 预处理所有初始化表达式 - 为编译时计算做准备
         for (Expr expression : initializationExpressions) {
             expression.canculculate();
         }
@@ -60,20 +59,17 @@ public class ConstDef extends Def {
         String constantName = targetVariable.op.getContent();
 
         if (targetVariable instanceof Id) {
-            // 处理普通常量定义 - 就像给重要文件加盖"不可修改"印章
             int constantValue = computedConstantValues.get(0);
             emit(new midCode(midCode.operation.CONST, constantName, String.valueOf(constantValue), null));
             inttable.add(constantName, new VarSymbol(constantName, true, constantValue));
 
         } else if (targetVariable instanceof Array) {
-            // 处理常量数组定义 - 就像建立永久档案库
             Array arrayTarget = (Array) targetVariable;
             Expr firstDimension = arrayTarget.getOneindex();
             Expr secondDimension = arrayTarget.getTwoindex();
             int firstDimensionSize = firstDimension.calculate();
 
             if (secondDimension == null) {
-                // 一维常量数组 - 建立单层档案柜
                 emit(new midCode(midCode.operation.ARRAY, constantName, String.valueOf(firstDimensionSize), null));
                 for (int i = 0; i < initializationExpressions.size(); i++) {
                     emit(new midCode(midCode.operation.PUTARRAY, constantName, String.valueOf(i),
@@ -81,7 +77,6 @@ public class ConstDef extends Def {
                 }
                 inttable.add(constantName, new ArraySymbol(constantName, true, 1, computedConstantValues));
             } else {
-                // 二维常量数组 - 建立多层档案库
                 int secondDimensionSize = secondDimension.calculate();
                 emit(new midCode(midCode.operation.ARRAY, constantName, String.valueOf(firstDimensionSize),
                         String.valueOf(secondDimensionSize)));

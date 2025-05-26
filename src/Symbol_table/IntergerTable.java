@@ -22,7 +22,7 @@ public class IntergerTable {
 
     /**
      * 空白构造器 - 创建独立的符号表实例
-     * 通常用于建立全局作用域或根级变量环境
+     * 用于建立全局作用域或根级变量环境
      */
     public IntergerTable() {
 

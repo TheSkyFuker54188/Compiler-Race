@@ -8,12 +8,12 @@ package Symbol_table.Symbols;
  * 采用继承机制复用基础符号的通用属性和行为
  */
 public class VarSymbol extends NorSymbol {
-    /* 数值存储域 - 保存变量的实际数值内容（适用于常量和初始化变量） */
+    /* 数值存储域 - 保存变量的实际数值内容 */
     private int storedValue;
 
     /**
      * 完整变量构造器 - 创建具有初始值的变量符号
-     * 适用于有明确初值的变量和常量声明
+     * 用于有明确初值的变量和常量声明
      * 
      * @param symbolName   变量标识符名称
      * @param constantFlag 常量属性标记
@@ -26,7 +26,7 @@ public class VarSymbol extends NorSymbol {
 
     /**
      * 基础变量构造器 - 创建无初值的变量符号
-     * 适用于声明但未初始化的变量
+     * 用于声明但未初始化的变量
      * 
      * @param symbolName   变量标识符名称
      * @param constantFlag 常量属性标记
@@ -37,7 +37,7 @@ public class VarSymbol extends NorSymbol {
 
     /**
      * 偏移变量构造器 - 创建具有内存位置信息的变量符号
-     * 适用于代码生成阶段需要内存布局的变量
+     * 用于代码生成阶段需要内存布局的变量
      * 
      * @param symbolName   变量标识符名称
      * @param memoryOffset 变量在栈帧中的偏移位置

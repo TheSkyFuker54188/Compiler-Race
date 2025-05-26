@@ -20,13 +20,13 @@ import Midcode.midCode;
 public class If extends Stmt {
     // 条件表达式 - 决定分支走向的"交通信号灯"
     Or conditionalExpression;
-    // if分支语句 - 条件为真时执行的代码块
+    // if分支语句 - 条件为真时运行的代码块
     Stmt truePathStatement;
-    // else分支语句 - 条件为假时执行的代码块(可为null)
+    // else分支语句 - 条件为假时运行的代码块(可为null)
     Stmt falsePathStatement;
-    // 第一个跳转标签 - 用于条件为假时的跳转
+    // 第一个跳转标签 - 条件为假时的跳转目标
     int falseJumpLabel;
-    // 第二个跳转标签 - 用于if分支结束后的跳转
+    // 第二个跳转标签 - if分支结束后的跳转目标
     int endJumpLabel;
 
     /**

@@ -19,7 +19,7 @@ public class FuncTable {
 
     /**
      * 默认构造器 - 创建独立的函数符号表实例
-     * 适用于全局作用域或根级函数定义环境
+     * 用于全局作用域或根级函数定义环境
      */
     public FuncTable() {
     }
@@ -44,7 +44,7 @@ public class FuncTable {
 
     /**
      * 注册函数符号实体
-     * 将函数标识符与其对应的符号描述信息建立映射关系
+     * 将函数标识符与其对应的符号描述信息关联
      * 
      * @param identifier 函数名称标识符
      * @param symbol     函数符号元数据对象

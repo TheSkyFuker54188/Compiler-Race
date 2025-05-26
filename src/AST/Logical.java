@@ -44,7 +44,7 @@ public class Logical extends Expr {
             this.isvalue = true;
             String comparisonSymbol = op.getContent();
 
-            // 执行比较运算，结果用1/0表示true/false
+            // 进行比较运算，结果用1/0表示true/false
             if (comparisonSymbol.equals("<")) {
                 value = leftExpression.value < rightExpression.value ? 1 : 0;
             } else if (comparisonSymbol.equals("<=")) {

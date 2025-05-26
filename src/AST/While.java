@@ -22,9 +22,9 @@ import Midcode.midCode;
 public class While extends Stmt {
     // 循环条件 - 决定是否继续转圈的"安全检查员"
     Or loopCondition;
-    // 循环体语句 - 每次循环要执行的内容
+    // 循环体语句 - 每次循环执行的内容
     Stmt loopBodyStatement;
-    // 跳转标签 - 用于标识这个循环的唯一ID
+    // 跳转标签 - 标识这个循环的唯一ID
     int loopIdentifier;
 
     /**
@@ -60,7 +60,7 @@ public class While extends Stmt {
         // 生成条件检查代码 - 安全检查，条件为假时跳出循环
         loopCondition.gen(loopIdentifier, true);
 
-        // 生成循环体代码 - 执行一轮旋转
+        // 生成循环体代码 - 执行一轮循环
         if (loopBodyStatement != null) {
             loopBodyStatement.gen();
         }

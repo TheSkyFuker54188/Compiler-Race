@@ -75,9 +75,8 @@ public class Parsing_mid {
         if (pos < tokenStream.size())
             return tokenStream.get(pos);
         return new Word();
-    }
+    } // 错误报告
 
-    // 错误处理
     private void reportError() {
         System.out.print("---Syntax Error---");
     }
