@@ -4,240 +4,312 @@ import Word.Word;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * 词法解析引擎 - 编译器前端的核心字符流处理器
+ * 
+ * 该类采用有限状态机模式实现源码的词法分析功能
+ * 负责将原始字符序列转换为结构化的词法单元流
+ * 集成预处理器、关键字识别器和符号分解器等子系统
+ */
 public class Sym {
-    private final String source_string;
-    private int line = 1;
-    private char[] source_char;
-    private char[] prech;
-    private String preprocess_string;
-    private ArrayList<Word> words = new ArrayList<>();
-    private HashMap<String, Integer> resword;
-    private HashMap<Character, Integer> extword;
-//    private String[] symbol;
+    /* 源码字符串缓存 - 保存待分析的完整源代码文本 */
+    private final String sourceCodeBuffer;
+    
+    /* 行号跟踪器 - 维护当前处理位置的行数信息 */
+    private int currentLineNumber = 1;
+    
+    /* 源码字符数组 - 将源码转换为字符序列以便逐字符处理 */
+    private char[] rawCharacterArray;
+    
+    /* 预处理字符数组 - 经过注释去除和格式化的字符序列 */
+    private char[] sanitizedCharArray;
+    
+    /* 预处理字符串 - 清理后的源码字符串表示 */
+    private String cleanedSourceText;
+    
+    /* 词法单元容器 - 存储解析生成的词法符号序列 */
+    private ArrayList<Word> lexicalTokenList = new ArrayList<>();
+    
+    /* 保留字映射表 - 关键字到类型编码的快速查找结构 */
+    private HashMap<String, Integer> reservedKeywordMap;
+    
+    /* 操作符映射表 - 单字符操作符到类型编码的映射关系 */
+    private HashMap<Character, Integer> operatorSymbolMap;
 
-//    private enum Symbol {
-//        A, IDENFR, INTCON, STRCON, MAINTK, CONSTTK, INTTK, BREAKTK, CONTINUETK, IFTK, ELSETK,
-//        NOT, AND, OR, WHILETK, GETINTTK, PRINTFTK, RETURNTK, PLUS, MINU, VOIDTK, MULT, DIV,
-//        MOD, LSS, LEQ, GRE, GEQ, EQL, NEQ, ASSIGN, SEMICN, COMMA, LPARENT, RPARENT, LBRACK,
-//        RBRACK, LBRACE, RBRACE;
-//    }
-
-    public Sym(String s) {
-        initi();
-        source_string = s;
-        source_char = s.toCharArray();
-        Preprocess(source_char);
-        getsym();
-
-        //词法分析调试模块
-//        for (int i = 0; i < words.size(); i++) {
-//            System.out.print(Symbol.values()[words.get(i).getSymnumber()]);
-//            System.out.print(' ' + words.get(i).getContent()+'\n');
-////            System.out.print(" " + words.get(i).getLine());
-//        }
+    /**
+     * 词法分析器构造函数 - 初始化并执行完整的词法解析流程
+     * 
+     * @param sourceCode 待分析的源代码字符串
+     */
+    public Sym(String sourceCode) {
+        initializeTokenMappings();
+        sourceCodeBuffer = sourceCode;
+        rawCharacterArray = sourceCode.toCharArray();
+        performPreprocessing(rawCharacterArray);
+        executeTokenization();
     }
 
+    /**
+     * 获取解析生成的词法单元序列
+     * 
+     * @return 词法符号列表
+     */
     public ArrayList<Word> getWords() {
-        return words;
+        return lexicalTokenList;
     }
 
-    public void Preprocess(char[] array) {   //预处理部分
-        char[] temp = new char[array.length + 1];
-        int index = 0;
-        for (int i = 0; i < array.length; i++) {
-            //单行注释处理
-            if (array[i] == '/' && array[i + 1] == '/') {    //可能越界？
-                while (array[i] != '\n') {
-                    i++;
+    /**
+     * 源码预处理器 - 执行注释过滤和格式标准化操作
+     * 采用双缓冲区机制处理字符流，确保内存安全和处理效率
+     * 
+     * @param characterStream 待处理的原始字符数组
+     */
+    private void performPreprocessing(char[] characterStream) {
+        char[] processingBuffer = new char[characterStream.length + 1];
+        int bufferIndex = 0;
+        
+        for (int cursor = 0; cursor < characterStream.length; cursor++) {
+            // 单行注释消除逻辑
+            if (cursor + 1 < characterStream.length && 
+                characterStream[cursor] == '/' && characterStream[cursor + 1] == '/') {
+                while (cursor < characterStream.length && characterStream[cursor] != '\n') {
+                    cursor++;
+                }
+                if (cursor < characterStream.length) {
+                    cursor--; // 回退以便外层循环正确处理换行符
                 }
             }
-            //多行注释处理
-            else if (array[i] == '/' && array[i + 1] == '*') {
-                i += 2;
-                while (array[i] != '*' || array[i + 1] != '/') {
-                    if (array[i] == '\n') {
-                        temp[index++] = '\n';
+            // 多行注释消除逻辑
+            else if (cursor + 1 < characterStream.length && 
+                     characterStream[cursor] == '/' && characterStream[cursor + 1] == '*') {
+                cursor += 2;
+                while (cursor + 1 < characterStream.length && 
+                       !(characterStream[cursor] == '*' && characterStream[cursor + 1] == '/')) {
+                    if (characterStream[cursor] == '\n') {
+                        processingBuffer[bufferIndex++] = '\n';
                     }
-                    i++;
+                    cursor++;
                 }
-                i++;
-                temp[index++] = ' ';
+                if (cursor + 1 < characterStream.length) {
+                    cursor++; // 跳过 '*/'
+                }
+                processingBuffer[bufferIndex++] = ' ';
                 continue;
             }
-            //标准表达式内特殊处理
-            else if (array[i] == '"') {
-                temp[index++] = array[i++];
-                while (array[i] != '"') {
-                    temp[index++] = array[i++];
+            // 字符串字面量保护机制
+            else if (characterStream[cursor] == '"') {
+                processingBuffer[bufferIndex++] = characterStream[cursor++];
+                while (cursor < characterStream.length && characterStream[cursor] != '"') {
+                    processingBuffer[bufferIndex++] = characterStream[cursor++];
+                }
+                if (cursor < characterStream.length) {
+                    processingBuffer[bufferIndex++] = characterStream[cursor]; // 添加结束引号
                 }
             }
-
-            //跳过空字符,同时保留换行符用来记录行数
-            if (array[i] != '\r') {
-                temp[index++] = array[i];
+            // 标准字符过滤和保留
+            else if (characterStream[cursor] != '\r') {
+                processingBuffer[bufferIndex++] = characterStream[cursor];
             }
         }
 
-        //标记结束字符
-        temp[index++] = '$';
+        // 添加流结束标记
+        processingBuffer[bufferIndex++] = '$';
 
-        //截取处理完可用字符串部分
-        char[] overpre = new char[index];
-        if (index >= 0) System.arraycopy(temp, 0, overpre, 0, index);
-        this.prech = overpre;
-        this.preprocess_string = new String(prech);
-
-        //调试模块
-//        for (char c : overpre) {
-//            System.out.print(c);
-//        }
+        // 构建最终的清理后字符数组
+        char[] finalizedArray = new char[bufferIndex];
+        System.arraycopy(processingBuffer, 0, finalizedArray, 0, bufferIndex);
+        this.sanitizedCharArray = finalizedArray;
+        this.cleanedSourceText = new String(sanitizedCharArray);
     }
 
-    public void initi() {
-        resword = new HashMap<>();
-        resword.put("main", 4);
-        resword.put("const", 5);
-        resword.put("int", 6);
-        resword.put("break", 7);
-        resword.put("continue", 8);
-        resword.put("if", 9);
-        resword.put("else", 10);
-        resword.put("while", 14);
-        resword.put("getint", 15);
-        resword.put("printf", 16);
-        resword.put("return", 17);
-        resword.put("void", 20);
-        extword = new HashMap<>();
-        extword.put('+', 18);
-        extword.put('-', 19);
-        extword.put('*', 21);
-        extword.put('/', 22);
-        extword.put('%', 23);
-        extword.put(';', 31);
-        extword.put(',', 32);
-        extword.put('(', 33);
-        extword.put(')', 34);
-        extword.put('[', 35);
-        extword.put(']', 36);
-        extword.put('{', 37);
-        extword.put('}', 38);
+    /**
+     * 词汇映射表初始化器 - 构建关键字和操作符的识别字典
+     * 采用哈希表数据结构实现O(1)时间复杂度的符号类型查找
+     */
+    private void initializeTokenMappings() {
+        reservedKeywordMap = new HashMap<>();
+        reservedKeywordMap.put("main", 4);
+        reservedKeywordMap.put("const", 5);
+        reservedKeywordMap.put("int", 6);
+        reservedKeywordMap.put("break", 7);
+        reservedKeywordMap.put("continue", 8);
+        reservedKeywordMap.put("if", 9);
+        reservedKeywordMap.put("else", 10);
+        reservedKeywordMap.put("while", 14);
+        reservedKeywordMap.put("getint", 15);
+        reservedKeywordMap.put("printf", 16);
+        reservedKeywordMap.put("return", 17);
+        reservedKeywordMap.put("void", 20);
+        
+        operatorSymbolMap = new HashMap<>();
+        operatorSymbolMap.put('+', 18);
+        operatorSymbolMap.put('-', 19);
+        operatorSymbolMap.put('*', 21);
+        operatorSymbolMap.put('/', 22);
+        operatorSymbolMap.put('%', 23);
+        operatorSymbolMap.put(';', 31);
+        operatorSymbolMap.put(',', 32);
+        operatorSymbolMap.put('(', 33);
+        operatorSymbolMap.put(')', 34);
+        operatorSymbolMap.put('[', 35);
+        operatorSymbolMap.put(']', 36);
+        operatorSymbolMap.put('{', 37);
+        operatorSymbolMap.put('}', 38);
     }
 
-    public void getsym() {
-        int index = 0;
-        int last = 0;
-        while (prech[index] != '$') {
-            //跳过空字符
-            while (prech[index] == ' ' || prech[index] == '\t' || prech[index] == '\n') {
-                if (prech[index] == '\n')
-                    line++;
-                index++;
+    /**
+     * 词法单元提取引擎 - 执行字符流到词法符号的转换过程
+     * 采用有限状态机算法识别标识符、数字、字符串和操作符等不同类型的词汇单元
+     */
+    private void executeTokenization() {
+        int streamPointer = 0;
+        int segmentEnd = 0;
+        
+        while (streamPointer < sanitizedCharArray.length && sanitizedCharArray[streamPointer] != '$') {
+            // 跳过空白字符和制表符，同时维护行号计数
+            while (streamPointer < sanitizedCharArray.length && 
+                   (sanitizedCharArray[streamPointer] == ' ' || 
+                    sanitizedCharArray[streamPointer] == '\t' || 
+                    sanitizedCharArray[streamPointer] == '\n')) {
+                if (sanitizedCharArray[streamPointer] == '\n')
+                    currentLineNumber++;
+                streamPointer++;
             }
-            //注意字符是否需要转义
-            if (Character.isUpperCase(prech[index]) || Character.isLowerCase(prech[index]) || prech[index] == '_') {
-                last = index;
-                while (Character.isLetterOrDigit(prech[last]) || prech[last] == '_') {
-                    last++;
+            
+            if (streamPointer >= sanitizedCharArray.length || sanitizedCharArray[streamPointer] == '$') break;
+            
+            // 标识符和关键字识别逻辑
+            if (Character.isUpperCase(sanitizedCharArray[streamPointer]) || 
+                Character.isLowerCase(sanitizedCharArray[streamPointer]) || 
+                sanitizedCharArray[streamPointer] == '_') {
+                segmentEnd = streamPointer;
+                while (segmentEnd < sanitizedCharArray.length && 
+                       (Character.isLetterOrDigit(sanitizedCharArray[segmentEnd]) || 
+                        sanitizedCharArray[segmentEnd] == '_')) {
+                    segmentEnd++;
                 }
-                String s = preprocess_string.substring(index, last);
-//                if (resword.containsKey(s)) {
-//                    words.add(new Word.Word(resword.get(s), s, line));
-//                } else {
-//                    words.add(new Word.Word(1, s, line));
-//                }
-                words.add(new Word(resword.getOrDefault(s, 1), s, line));
-                index = last;
-            } else if (Character.isDigit(prech[index])) {      //注意可能会有对前导0的特判
-                last = index;
-                while (Character.isDigit(prech[last])) {
-                    last++;
+                String identifierText = cleanedSourceText.substring(streamPointer, segmentEnd);
+                lexicalTokenList.add(new Word(reservedKeywordMap.getOrDefault(identifierText, 1), 
+                                            identifierText, currentLineNumber));
+                streamPointer = segmentEnd;
+            } 
+            // 数字字面量识别逻辑
+            else if (Character.isDigit(sanitizedCharArray[streamPointer])) {
+                segmentEnd = streamPointer;
+                while (segmentEnd < sanitizedCharArray.length && 
+                       Character.isDigit(sanitizedCharArray[segmentEnd])) {
+                    segmentEnd++;
                 }
-                words.add(new Word(2, preprocess_string.substring(index, last), line));
-                index = last;
-            } else if (prech[index] == '"') {
-                int count = 0;
-                boolean flag = true;
-                last = index + 1;
-                while (prech[last] != '"') {
-                    if (prech[last] == '\\') {
-                        if (prech[last + 1] != 'n')
-                            flag = false;
-                    } else if (prech[last] == '%') {
-                        if (prech[last + 1] == 'd') {
-                            count++;
-                        } else {
-                            flag = false;
+                lexicalTokenList.add(new Word(2, cleanedSourceText.substring(streamPointer, segmentEnd), 
+                                            currentLineNumber));
+                streamPointer = segmentEnd;
+            } 
+            // 字符串字面量识别逻辑
+            else if (sanitizedCharArray[streamPointer] == '"') {
+                int formatCount = 0;
+                boolean validFormat = true;
+                segmentEnd = streamPointer + 1;
+                while (segmentEnd < sanitizedCharArray.length && sanitizedCharArray[segmentEnd] != '"') {
+                    if (sanitizedCharArray[segmentEnd] == '\\') {
+                        if (segmentEnd + 1 < sanitizedCharArray.length && 
+                            sanitizedCharArray[segmentEnd + 1] != 'n') {
+                            validFormat = false;
                         }
-                    } else if (prech[last] == 32 || prech[last] == 33 || prech[last] >= 40 && prech[last] <= 126) {
-                        last++;
-                        continue;
+                        segmentEnd += 2;
+                    } else if (sanitizedCharArray[segmentEnd] == '%') {
+                        if (segmentEnd + 1 < sanitizedCharArray.length && 
+                            (sanitizedCharArray[segmentEnd + 1] == 'd' || 
+                             sanitizedCharArray[segmentEnd + 1] == 'c')) {
+                            formatCount++;
+                        } else {
+                            validFormat = false;
+                        }
+                        segmentEnd += 2;
                     } else {
-                        flag = false;
+                        segmentEnd++;
                     }
-                    last++;
                 }
-                words.add(new FormatWord(3, preprocess_string.substring(index, last), line, count, flag));
-                index = last + 1;
-            } else if (prech[index] == '&') {
-                if (prech[index + 1] == '&') {
-                    words.add(new Word(12, "&&", line));
-                    index += 2;
+                lexicalTokenList.add(new FormatWord(3, cleanedSourceText.substring(streamPointer, segmentEnd), 
+                                                  currentLineNumber, formatCount, validFormat));
+                streamPointer = segmentEnd + 1;
+            } 
+            // 逻辑AND操作符识别
+            else if (sanitizedCharArray[streamPointer] == '&') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '&') {
+                    lexicalTokenList.add(new Word(12, "&&", currentLineNumber));
+                    streamPointer += 2;
                 } else {
                     System.out.println("&wrong");
                     break;
                 }
-            } else if (prech[index] == '!') {
-                if (prech[index + 1] == '=') {
-                    words.add(new Word(29, "!=", line));
-                    index += 2;
+            }
+            // 逻辑NOT和不等操作符识别
+            else if (sanitizedCharArray[streamPointer] == '!') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '=') {
+                    lexicalTokenList.add(new Word(29, "!=", currentLineNumber));
+                    streamPointer += 2;
                 } else {
-                    words.add(new Word(11, "!", line));
-                    index++;
+                    lexicalTokenList.add(new Word(11, "!", currentLineNumber));
+                    streamPointer++;
                 }
-            } else if (prech[index] == '|') {
-                if (prech[index + 1] == '|') {
-                    words.add(new Word(13, "||", line));
-                    index += 2;
+            }
+            // 逻辑OR操作符识别
+            else if (sanitizedCharArray[streamPointer] == '|') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '|') {
+                    lexicalTokenList.add(new Word(13, "||", currentLineNumber));
+                    streamPointer += 2;
                 } else {
                     System.out.println("|wrong");
                     break;
                 }
-            } else if (prech[index] == '<') {
-                if (prech[index + 1] == '=') {
-                    words.add(new Word(25, "<=", line));
-                    index += 2;
+            }
+            // 小于和小于等于操作符识别
+            else if (sanitizedCharArray[streamPointer] == '<') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '=') {
+                    lexicalTokenList.add(new Word(25, "<=", currentLineNumber));
+                    streamPointer += 2;
                 } else {
-                    words.add(new Word(24, "<", line));
-                    index++;
+                    lexicalTokenList.add(new Word(24, "<", currentLineNumber));
+                    streamPointer++;
                 }
-            } else if (prech[index] == '>') {
-                if (prech[index + 1] == '=') {
-                    words.add(new Word(27, ">=", line));
-                    index += 2;
+            }
+            // 大于和大于等于操作符识别
+            else if (sanitizedCharArray[streamPointer] == '>') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '=') {
+                    lexicalTokenList.add(new Word(27, ">=", currentLineNumber));
+                    streamPointer += 2;
                 } else {
-                    words.add(new Word(26, ">", line));
-                    index++;
+                    lexicalTokenList.add(new Word(26, ">", currentLineNumber));
+                    streamPointer++;
                 }
-            } else if (prech[index] == '=') {
-                if (prech[index + 1] == '=') {
-                    words.add(new Word(28, "==", line));
-                    index += 2;
+            }
+            // 等于和赋值操作符识别
+            else if (sanitizedCharArray[streamPointer] == '=') {
+                if (streamPointer + 1 < sanitizedCharArray.length && 
+                    sanitizedCharArray[streamPointer + 1] == '=') {
+                    lexicalTokenList.add(new Word(28, "==", currentLineNumber));
+                    streamPointer += 2;
                 } else {
-                    words.add(new Word(30, "=", line));
-                    index++;
+                    lexicalTokenList.add(new Word(30, "=", currentLineNumber));
+                    streamPointer++;
                 }
-            } else if (prech[index] == '[' || prech[index] == ']' || prech[index] == '{' ||
-                    prech[index] == '}' || prech[index] == '(' || prech[index] == ')' ||
-                    prech[index] == ',' || prech[index] == ';' || prech[index] == '%' ||
-                    prech[index] == '+' || prech[index] == '*' || prech[index] == '/' || prech[index] == '-'
-            ) {
-                words.add(new Word(extword.get(prech[index]), String.valueOf(prech[index]), line));
-                index++;
-            } else if (prech[index] == '$') {
-                break;
-            } else {
-                System.out.println("something is wrong");
-                break;
+            }
+            // 其他单字符操作符处理
+            else if (operatorSymbolMap.containsKey(sanitizedCharArray[streamPointer])) {
+                lexicalTokenList.add(new Word(operatorSymbolMap.get(sanitizedCharArray[streamPointer]), 
+                                            String.valueOf(sanitizedCharArray[streamPointer]), 
+                                            currentLineNumber));
+                streamPointer++;
+            }
+            // 未识别字符处理
+            else {
+                System.out.println("Unrecognized character: " + sanitizedCharArray[streamPointer]);
+                streamPointer++;
             }
         }
     }
